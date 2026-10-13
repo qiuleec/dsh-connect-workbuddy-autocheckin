@@ -3,7 +3,7 @@
   "displayName": "DSH WorkBuddy Auto Check-in",
   "description": "Automatically claim the WorkBuddy CN daily check-in reward once a day, without pressing the button.",
   "version": "0.1.0",
-  "author": "abnor",
+  "author": "qiuleec",
   "license": "MIT",
   "keywords": [
     "dsh-plugin",
@@ -49,6 +49,7 @@
     "lib",
     "cordis.patch.yml",
     "README.md",
+    "README.en.md",
     "LICENSE"
   ],
   "scripts": {
@@ -62,6 +63,14 @@
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qiuleec/dsh-connect-workbuddy-autocheckin.git"
+  },
+  "homepage": "https://github.com/qiuleec/dsh-connect-workbuddy-autocheckin#readme",
+  "bugs": {
+    "url": "https://github.com/qiuleec/dsh-connect-workbuddy-autocheckin/issues"
   },
   "peerDependenciesMeta": {
     "dsh-connect-workbuddy": {
