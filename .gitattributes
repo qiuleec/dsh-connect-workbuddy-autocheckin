@@ -1,0 +1,7 @@
+# Normalize to LF in the repository, so a Windows checkout and a Linux CI run
+# see the same bytes. CI runs this project on both.
+* text=auto eol=lf
+
+# Binary-ish files Git should never try to normalize.
+*.png binary
+*.ico binary

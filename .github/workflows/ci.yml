@@ -1,0 +1,35 @@
+name: ci
+
+# Windows is a first-class target for this plugin: the credential store it
+# depends on has Windows-only code paths (PowerShell spawn, registry lookup,
+# `%LOCALAPPDATA%`), so a Linux-only run would not cover the platform most
+# likely to break.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # typecheck + test + build, in that order: a type error should fail before
+      # the slower build runs.
+      - run: pnpm run check

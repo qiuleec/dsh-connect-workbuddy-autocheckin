@@ -1,0 +1,10 @@
+# Register the WorkBuddy auto check-in companion plugin.
+#
+# It is a SEPARATE entry from `dsh-connect-workbuddy` on purpose: the companion
+# needs the base plugin to be mounted (it imports its credential store and
+# upstream client), but it must not be part of the base bundle, so that
+# upgrading the base plugin cannot remove it and disabling it cannot affect the
+# base plugin's providers.
+- insert:
+    - id: dsh-connect-workbuddy-autocheckin
+      name: dsh-connect-workbuddy-autocheckin
