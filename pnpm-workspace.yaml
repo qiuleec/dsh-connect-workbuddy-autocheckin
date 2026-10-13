@@ -1,36 +1,41 @@
-﻿# pnpm 11 settings. `pnpm-workspace.yaml` is the only place these are read from
-# in pnpm 11: a `pnpm` key in package.json is silently ignored, and the old
-# `onlyBuiltDependencies` list alone does NOT silence the unapproved-build error.
+﻿# pnpm settings. In pnpm 11 these are read from HERE: a `pnpm` key in
+# package.json is silently ignored (pnpm warns about it).
 #
 # WHY THIS FILE EXISTS
 #
-# CI failed with:
+# With no decision recorded for a package that has a build script, pnpm treats
+# it as UNDECIDED: it lists the package, prints
 #
-#   [ERR_PNPM_IGNORED_BUILDS] Ignored build scripts:
-#     @google/genai@1.52.0, @google/genai@2.21.0, protobufjs@7.6.6
+#   [ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: ...
 #   Run "pnpm approve-builds" to pick which dependencies should be allowed...
 #
-# Even though the install itself succeeded. pnpm keeps a tri-state per package:
+# and EXITS 1 — even though the install itself succeeded. An empty allowlist is
+# NOT the same as "skip them"; skipping has to be stated explicitly, per package.
 #
-#   true      -> run the script
-#   false     -> skip it, and RECORD that the decision was made
-#   undefined -> undecided, so pnpm reports it and exits 1
+# BOTH SETTINGS ARE SET ON PURPOSE.
 #
-# `onlyBuiltDependencies` can only express "true". Listing nothing there leaves
-# these three UNDECIDED, which is exactly the failing state. `allowBuilds` is the
-# map that can say `false` — the deliberate "never build this".
+# pnpm changed this API across the 11.x line: `onlyBuiltDependencies` (a list of
+# packages to BUILD) was superseded by `allowBuilds` (a map of package -> boolean,
+# which is the only form that can say "never build this one"). Which one a given
+# runner honours depends on its exact patch version, and pnpm/action-setup
+# resolves `version: 11` to whatever is newest at run time. Setting BOTH means
+# the decision is recorded either way, so CI cannot flip red on a pnpm bump.
 #
-# WHERE THEY COME FROM
-#
-# They are not dependencies of this plugin. They arrive transitively through the
-# base plugin's optional peer:
+# Nothing here needs a build script. The three packages pnpm complained about
+# arrive transitively, through the base plugin's optional peer:
 #
 #   dsh-connect-workbuddy -> @earendil-works/pi-ai
 #                         -> @google/genai -> protobufjs
 #
 # This plugin's own runtime dependency is @deepseek-ai/schemastery, and its peer
-# dsh-connect-workbuddy is provided by the host profile. Nothing here imports,
-# runs, or needs a postinstall step from any of them, so all three are false.
+# dsh-connect-workbuddy is provided by the host profile.
+
+# pnpm 11.7+ form: explicit per-package decision.
 allowBuilds:
   '@google/genai': false
   protobufjs: false
+
+# Older 11.x form: an empty list means "approve no builds", which is the desired
+# outcome here. Kept alongside `allowBuilds` so the recorded decision does not
+# depend on which minors the runner happens to have.
+onlyBuiltDependencies: []

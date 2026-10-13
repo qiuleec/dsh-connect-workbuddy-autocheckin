@@ -8,6 +8,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   check:
@@ -21,14 +22,46 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 11
+          # Pinned EXACTLY, not `11`. `version: 11` resolves to whatever the
+          # latest 11.x happens to be at run time, so a runner-side minor
+          # release could change how build approval is read and turn a green
+          # build red without any commit here. The build-approval handling in
+          # particular has moved between minors (`onlyBuiltDependencies` ->
+          # `allowBuilds`), so the version is part of the contract.
+          version: 11.7.0
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
+      # Report the resolved versions before installing. When install behaviour
+      # differs between a laptop and a runner, this line is what tells you
+      # whether the difference was the toolchain.
+      - name: versions
+        run: |
+          node --version
+          pnpm --version
+
+      - name: install
+        run: pnpm install --frozen-lockfile
+
+      # Assert the decision pnpm actually recorded, rather than trusting the
+      # exit code. `ignoredBuilds` must be empty: a non-empty list is exactly
+      # what raises ERR_PNPM_IGNORED_BUILDS, and it is the one piece of state
+      # that cannot be inferred from the log.
+      - name: verify no undecided builds
+        shell: bash
+        run: |
+          modules=node_modules/.modules.yaml
+          echo "--- build decisions recorded by pnpm ---"
+          grep -A4 '"allowBuilds"' "$modules" || echo "(no allowBuilds block)"
+          if grep -qE '"ignoredBuilds":\s*\[[^]]' "$modules"; then
+            echo "::error::pnpm left builds undecided:"
+            grep -A4 '"ignoredBuilds"' "$modules"
+            exit 1
+          fi
+          echo "ignoredBuilds is empty - no undecided builds"
 
       # typecheck + test + build, in that order: a type error should fail before
       # the slower build runs.
