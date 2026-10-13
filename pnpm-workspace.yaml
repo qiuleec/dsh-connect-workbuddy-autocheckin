@@ -1,0 +1,19 @@
+﻿# pnpm 11 reads workspace settings from HERE, not from a `pnpm` key in
+# package.json (it warns that the package.json field is no longer read).
+#
+# `onlyBuiltDependencies` lists packages allowed to run install scripts. Without
+# it, pnpm IGNORES the scripts of anything not allowlisted and then EXITS 1 with
+# ERR_PNPM_IGNORED_BUILDS -- failing CI even though the install itself succeeded.
+#
+# The three packages pnpm complained about arrive transitively, through the base
+# plugin's optional peer `@earendil-works/pi-ai`:
+#
+#   dsh-connect-workbuddy -> @earendil-works/pi-ai -> @google/genai -> protobufjs
+#
+# They are NOT dependencies of this plugin, and nothing here uses them.
+#
+# Deliberately EMPTY: nothing in this repository should run an install script.
+# This plugin's only runtime dependency is `@deepseek-ai/schemastery`, and its
+# peer `dsh-connect-workbuddy` is provided by the host profile. An empty list
+# records that decision, so pnpm stops asking and stops exiting 1.
+onlyBuiltDependencies: []
